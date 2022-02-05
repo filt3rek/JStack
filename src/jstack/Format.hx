@@ -8,7 +8,7 @@ using StringTools;
     Call stack formatting utils.
 **/
 class Format {
-    public static function toString (stack:Array<StackItem>) : String {
+    public static function toString (stack:haxe.CallStack) : String {
         var format = Tools.getFormat();
         var buf = new StringBuf();
         for (item in stack) {

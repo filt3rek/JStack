@@ -17,14 +17,91 @@ enum StackItem {
 	LocalFunction( ?v : Int );
 }
 
-class CallStack {
-#if ((php7 || JSTACK_HAXE_DEV) && !macro)
+class CallStackMapPosition{
 	/**
 		If defined this function will be used to transform call stack entries.
 		@param String - generated php file name.
 		@param Int - Line number in generated file.
 	*/
 	static public var mapPosition : String->Int->Null<{?source:String, ?originalLine:Int}>;
+}
+
+@:coreApi
+@:allow(haxe.Exception)
+@:using(haxe.CallStack)
+abstract CallStack(Array<StackItem>) from Array<StackItem> {
+#if ((php7 || JSTACK_HAXE_DEV) && !macro)
+
+	// Copied from original haxe.CallStack
+
+	public var length(get,never):Int;
+	inline function get_length():Int return this.length;
+
+	@:arrayAccess public inline function get(index:Int):StackItem {
+		return this[index];
+	}
+
+	public inline function copy():CallStack {
+		return this.copy();
+	}
+
+	static function exceptionToString(e:haxe.Exception):String {
+		if(e.previous == null) {
+			return 'Exception: ${e.toString()}${e.stack}';
+		}
+		var result = '';
+		var e:Null<haxe.Exception> = e;
+		var prev:Null<haxe.Exception> = null;
+		while(e != null) {
+			if(prev == null) {
+				result = 'Exception: ${e.message}${e.stack}' + result;
+			} else {
+				var prevStack = @:privateAccess e.stack.subtract(prev.stack);
+				result = 'Exception: ${e.message}${prevStack}\n\nNext ' + result;
+			}
+			prev = e;
+			e = e.previous;
+		}
+		return "result";
+	}
+
+	public function subtract(stack:CallStack):CallStack {
+		var startIndex = -1;
+		var i = -1;
+		while(++i < this.length) {
+			for(j in 0...stack.length) {
+				if(equalItems(this[i], stack[j])) {
+					if(startIndex < 0) {
+						startIndex = i;
+					}
+					++i;
+					if(i >= this.length) break;
+				} else {
+					startIndex = -1;
+				}
+			}
+			if(startIndex >= 0) break;
+		}
+		return startIndex >= 0 ? this.slice(0, startIndex) : this;
+	}
+
+	static function equalItems(item1:Null<StackItem>, item2:Null<StackItem>):Bool {
+		return switch([item1, item2]) {
+			case [null, null]: true;
+			case [CFunction, CFunction]: true;
+			case [Module(m1), Module(m2)]:
+				m1 == m2;
+			case [FilePos(item1, file1, line1, col1), FilePos(item2, file2, line2, col2)]:
+				file1 == file2 && line1 == line2 && col1 == col2 && equalItems(item1, item2);
+			case [Method(class1, method1), Method(class2, method2)]:
+				class1 == class2 && method1 == method2;
+			case [LocalFunction(v1), LocalFunction(v2)]:
+				v1 == v2;
+			case _: false;
+		}
+	}
+
+	// End copy
 
 	@:ifFeature("haxe.CallStack.exceptionStack")
 	static var lastExceptionTrace : NativeTrace;
@@ -41,14 +118,14 @@ class CallStack {
 		the place the last exception was thrown and the place it was
 		caught, or an empty array if not available.
 	**/
-	public static function exceptionStack() : Array<StackItem> {
+	public static function exceptionStack(fullStack : Bool = false) : Array<StackItem> {
 		return makeStack(lastExceptionTrace == null ? new NativeIndexedArray() : lastExceptionTrace);
 	}
 
 	/**
 		Returns a representation of the stack as a printable string.
 	**/
-	public static function toString( stack : Array<StackItem> ) {
+	public static function toString( stack:CallStack ) : String {
 		return jstack.Format.toString(stack);
 	}
 
@@ -109,8 +186,8 @@ class CallStack {
 				}
 			}
 			if (Global.isset(entry['file'])) {
-				if (mapPosition != null) {
-					var pos = mapPosition(entry['file'], entry['line']);
+				if (CallStackMapPosition.mapPosition != null) {
+					var pos = CallStackMapPosition.mapPosition(entry['file'], entry['line']);
 					if (pos != null && pos.source != null && pos.originalLine != null) {
 						entry['file'] = pos.source;
 						entry['line'] = pos.originalLine;

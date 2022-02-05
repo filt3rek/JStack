@@ -43,7 +43,7 @@ class JStack {
      */
     static function init () {
         //CallStack.exceptionStack() and CallStack.callStack();
-        var phpClassName = Boot.getPhpName(CallStack.getClassName());
+        var phpClassName = Boot.getPhpName(CallStackMapPosition.getClassName());
         mapPositionDefined = property_exists(phpClassName, 'mapPosition');
         if (mapPositionDefined) {
             Syntax.setStaticField(phpClassName, 'mapPosition', mapPosition);
