@@ -4,7 +4,7 @@ package jstack;
 
 #if js
 typedef JStack = jstack.js.JStack;
-#elseif (php && (php7 || JSTACK_HAXE_DEV))
+#elseif php
 typedef JStack = jstack.php7.JStack;
 #end
 

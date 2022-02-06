@@ -27,7 +27,7 @@ class Tools {
     static public function initialize () {
         #if (display || !(debug || JSTACK_FORCE)) return; #end
         if (Context.defined('display') || !(Context.defined('debug') || Context.defined('JSTACK_FORCE'))) return;
-        if (!Context.defined('js') && !Context.defined('php7') && !Context.defined('JSTACK_HAXE_DEV')) return;
+        if (!Context.defined('js') && !Context.defined('php')) return;
 
         if(Context.defined('js')) {
             Compiler.addClassPath(getJstackRootDir() + 'format/js');

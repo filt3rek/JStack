@@ -1,6 +1,6 @@
 package haxe;
 
-#if ((php7 || JSTACK_HAXE_DEV) && !macro)
+#if !macro
 import php.*;
 
 private typedef NativeTrace = NativeIndexedArray<NativeAssocArray<Dynamic>>;
@@ -30,7 +30,7 @@ class CallStackMapPosition{
 @:allow(haxe.Exception)
 @:using(haxe.CallStack)
 abstract CallStack(Array<StackItem>) from Array<StackItem> {
-#if ((php7 || JSTACK_HAXE_DEV) && !macro)
+#if !macro
 
 	// Copied from original haxe.CallStack
 
