@@ -62,6 +62,7 @@ class JStack {
     static function _uncaughtExceptionHandler (e:Throwable) {
         var error = uncaughtExceptionHandler(e);
         Sys.stderr().writeString(error);
+        throw error;
     }
 
     /**
@@ -102,7 +103,7 @@ class JStack {
         if (map == null && !sourceMaps.exists(file)) {
             try {
                 map = new SourceMap(file_get_contents('$file.map'));
-            } catch(e:Dynamic) {}
+            } catch(e) {}
             sourceMaps.set(file, map);
         }
         return map;
